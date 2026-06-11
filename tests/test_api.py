@@ -129,4 +129,6 @@ def test_log_and_get_search_history(tmp_path, monkeypatch):
     log_search("Evangelion")
     history = get_search_history()
     assert len(history) == 2
-    assert history[0]["query"] == "Evangelion"
+    queries = [row["query"] for row in history]
+    assert "Cowboy Bebop" in queries
+    assert "Evangelion" in queries

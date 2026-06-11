@@ -75,7 +75,7 @@ def search_anime(search: str, page: int = 1, per_page: int = 10) -> Optional[dic
     try:
         data = _post(SEARCH_QUERY, variables)
         return data["data"]["Page"]
-    except (requests.RequestException, KeyError) as e:
+    except Exception as e:
         print(f"[error] search failed: {e}")
         return None
 
@@ -85,6 +85,6 @@ def get_anime_details(anime_id: int) -> Optional[dict]:
     try:
         data = _post(DETAILS_QUERY, variables)
         return data["data"]["Media"]
-    except (requests.RequestException, KeyError) as e:
+    except Exception as e:
         print(f"[error] fetch details failed: {e}")
         return None
