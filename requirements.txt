@@ -1,1 +1,10 @@
-requests
+certifi==2026.5.20
+charset-normalizer==3.4.7
+idna==3.18
+iniconfig==2.3.0
+packaging==26.2
+pluggy==1.6.0
+Pygments==2.20.0
+pytest==9.0.3
+requests==2.34.2
+urllib3==2.7.0
