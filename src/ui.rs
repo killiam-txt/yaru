@@ -39,7 +39,7 @@ pub fn draw(f: &mut Frame, app: &App) {
             state.select(Some(app.selected));
             f.render_stateful_widget(list, chunks[1], &mut state);
 
-            let footer = Paragraph::new("[esc] quit  [enter] search  [up/down] navigate  [i] details")
+            let footer = Paragraph::new("[esc] quit  [enter] search  [up/down] navigate  [tab] details")
                 .style(Style::default().fg(Color::DarkGray));
             f.render_widget(footer, chunks[2]);
         }

@@ -38,7 +38,7 @@ fn main() -> Result<(), io::Error> {
                             app.selected -= 1;
                         }
                     }
-                    KeyCode::Char('i') => app.fetch_detail(),
+                    KeyCode::Tab => app.fetch_detail(),
                     KeyCode::Char(c) => app.input.push(c),
                     KeyCode::Backspace => {
                         app.input.pop();
