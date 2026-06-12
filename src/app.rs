@@ -4,6 +4,7 @@ use pyo3::types::PyDict;
 pub enum Screen {
     Search,
     Detail,
+    List,
 }
 
 pub struct App {
@@ -14,6 +15,7 @@ pub struct App {
     pub selected: usize,
     pub detail: Option<String>,
     pub screen: Screen,
+    pub list_items: Vec<String>,
 }
 
 impl App {
@@ -26,6 +28,7 @@ impl App {
             selected: 0,
             detail: None,
             screen: Screen::Search,
+            list_items: Vec::new(),
         }
     }
 
@@ -171,5 +174,46 @@ impl App {
                 self.error = Some(format!("[error] {}", e));
             }
         });
+    }
+
+    pub fn fetch_list(&mut self) {
+        Python::with_gil(|py| {
+            let result: PyResult<()> = (|| {
+                let module = PyModule::import(py, "yaru_core.db")?;
+                let get_fn = module.getattr("get_list")?;
+                let response = get_fn.call0()?;
+                let items = response.downcast::<pyo3::types::PyList>()?;
+
+                self.list_items = items
+                    .iter()
+                    .map(|item| {
+                        let item = item.downcast::<PyDict>().unwrap();
+                        let title = item.get_item("title").unwrap()
+                            .map(|v| v.to_string()).unwrap_or("N/A".to_string());
+                        let year = item.get_item("year").unwrap()
+                            .map(|v| v.to_string()).unwrap_or("N/A".to_string());
+                        let score = item.get_item("score").unwrap()
+                            .map(|v| v.to_string()).unwrap_or("N/A".to_string());
+                        let eps = item.get_item("episodes").unwrap()
+                            .map(|v| v.to_string()).unwrap_or("N/A".to_string());
+                        let status = item.get_item("watch_status").unwrap()
+                            .map(|v| v.to_string()).unwrap_or("N/A".to_string());
+
+                        format!(
+                            "{:<35} [{:>4}] | score: {:>4} | eps: {:>4} | {}",
+                            title, year, score, eps, status
+                        )
+                    })
+                    .collect();
+
+                Ok(())
+            })();
+
+            if let Err(e) = result {
+                self.error = Some(format!("[error] {}", e));
+            }
+        });
+
+        self.screen = Screen::List;
     }
 }

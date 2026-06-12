@@ -39,7 +39,7 @@ pub fn draw(f: &mut Frame, app: &App) {
             state.select(Some(app.selected));
             f.render_stateful_widget(list, chunks[1], &mut state);
 
-            let footer = Paragraph::new("[esc] quit  [enter] search  [up/down] navigate  [tab] details")
+            let footer = Paragraph::new("[esc] quit  [enter] search  [up/down] navigate  [tab] details  [w] watchlist")
                 .style(Style::default().fg(Color::DarkGray));
             f.render_widget(footer, chunks[2]);
         }
@@ -55,6 +55,28 @@ pub fn draw(f: &mut Frame, app: &App) {
             f.render_widget(detail, chunks[1]);
 
             let footer = Paragraph::new("[esc] back  [l] add to list")
+                .style(Style::default().fg(Color::DarkGray));
+            f.render_widget(footer, chunks[2]);
+        }
+        Screen::List => {
+            let placeholder = Paragraph::new("")
+                .block(Block::default().borders(Borders::ALL).title(" yaru "));
+            f.render_widget(placeholder, chunks[0]);
+
+            let items: Vec<ListItem> = if app.list_items.is_empty() {
+                vec![ListItem::new("-- watchlist is empty --")]
+            } else {
+                app.list_items
+                    .iter()
+                    .map(|r| ListItem::new(r.as_str()))
+                    .collect()
+            };
+
+            let list = List::new(items)
+                .block(Block::default().borders(Borders::ALL).title(" watchlist "));
+            f.render_widget(list, chunks[1]);
+
+            let footer = Paragraph::new("[esc] back")
                 .style(Style::default().fg(Color::DarkGray));
             f.render_widget(footer, chunks[2]);
         }

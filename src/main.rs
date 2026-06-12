@@ -46,6 +46,7 @@ fn main() -> Result<(), io::Error> {
                         }
                     }
                     KeyCode::Tab => app.fetch_detail(),
+                    KeyCode::Char('w') => app.fetch_list(),
                     KeyCode::Char(c) => app.input.push(c),
                     KeyCode::Backspace => {
                         app.input.pop();
@@ -55,6 +56,10 @@ fn main() -> Result<(), io::Error> {
                 Screen::Detail => match key.code {
                     KeyCode::Esc => app.screen = Screen::Search,
                     KeyCode::Char('l') => app.add_to_list(),
+                    _ => {}
+                },
+                Screen::List => match key.code {
+                    KeyCode::Esc => app.screen = Screen::Search,
                     _ => {}
                 },
             }
