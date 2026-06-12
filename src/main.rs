@@ -74,7 +74,14 @@ impl App {
                         let status = item.get_item("status").unwrap()
                             .map(|v| v.to_string()).unwrap_or("N/A".to_string());
 
-                        format!("{} ({}) | score: {} | eps: {} | {}", title, year, score, eps, status)
+                        format!(
+                            "{:<35} [{:>4}] | score: {:>4} | eps: {:>4} | {}",
+                            title,
+                            year,
+                            score,
+                            eps,
+                            status
+                        )
                     })
                     .collect();
 
@@ -127,14 +134,14 @@ fn main() -> Result<(), io::Error> {
                 .block(Block::default().borders(Borders::ALL).title(" results "));
             f.render_widget(list, chunks[1]);
 
-            let footer = Paragraph::new("[q] quit  [enter] search  [j/k] navigate")
+            let footer = Paragraph::new("[esc] quit  [enter] search  [j/k] navigate")
                 .style(Style::default().fg(Color::DarkGray));
             f.render_widget(footer, chunks[2]);
         })?;
 
         if let Event::Key(key) = event::read()? {
             match key.code {
-                KeyCode::Char('q') => break,
+                KeyCode::Esc => break,
                 KeyCode::Enter => app.search(),
                 KeyCode::Char(c) => app.input.push(c),
                 KeyCode::Backspace => {
