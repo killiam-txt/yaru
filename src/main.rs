@@ -9,7 +9,7 @@ use ratatui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
     style::{Color, Style},
-    widgets::{Block, Borders, List, ListItem, Paragraph},
+    widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
     Terminal,
 };
 use std::io;
@@ -18,6 +18,7 @@ struct App {
     input: String,
     results: Vec<String>,
     error: Option<String>,
+    selected: usize,
 }
 
 impl App {
@@ -26,6 +27,7 @@ impl App {
             input: String::new(),
             results: Vec::new(),
             error: None,
+            selected: 0,
         }
     }
 
@@ -33,6 +35,7 @@ impl App {
         if self.input.is_empty() {
             return;
         }
+        self.selected = 0;
 
         Python::with_gil(|py| {
             let result: PyResult<()> = (|| {
@@ -131,10 +134,14 @@ fn main() -> Result<(), io::Error> {
             };
 
             let list = List::new(items)
-                .block(Block::default().borders(Borders::ALL).title(" results "));
-            f.render_widget(list, chunks[1]);
+                .block(Block::default().borders(Borders::ALL).title(" results "))
+                .highlight_symbol("> ");
 
-            let footer = Paragraph::new("[esc] quit  [enter] search  [j/k] navigate")
+            let mut state = ListState::default();
+            state.select(Some(app.selected));
+            f.render_stateful_widget(list, chunks[1], &mut state);
+
+            let footer = Paragraph::new("[esc] quit  [enter] search  [up/down] navigate")
                 .style(Style::default().fg(Color::DarkGray));
             f.render_widget(footer, chunks[2]);
         })?;
@@ -143,6 +150,16 @@ fn main() -> Result<(), io::Error> {
             match key.code {
                 KeyCode::Esc => break,
                 KeyCode::Enter => app.search(),
+                KeyCode::Down => {
+                    if !app.results.is_empty() && app.selected < app.results.len() - 1 {
+                        app.selected += 1;
+                    }
+                }
+                KeyCode::Up => {
+                    if app.selected > 0 {
+                        app.selected -= 1;
+                    }
+                }
                 KeyCode::Char(c) => app.input.push(c),
                 KeyCode::Backspace => {
                     app.input.pop();
