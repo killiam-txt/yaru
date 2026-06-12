@@ -3,6 +3,8 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use pyo3::prelude::*;
+use pyo3::types::PyDict;
 use ratatui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
@@ -15,17 +17,75 @@ use std::io;
 struct App {
     input: String,
     results: Vec<String>,
+    error: Option<String>,
 }
 
 impl App {
     fn new() -> Self {
         Self {
             input: String::new(),
-            results: vec![
-                "Cowboy Bebop (1998) | score: 8.6 | eps: 26 | FINISHED".to_string(),
-                "Evangelion (1995) | score: 8.5 | eps: 26 | FINISHED".to_string(),
-            ],
+            results: Vec::new(),
+            error: None,
         }
+    }
+
+    fn search(&mut self) {
+        if self.input.is_empty() {
+            return;
+        }
+
+        Python::with_gil(|py| {
+            let result: PyResult<()> = (|| {
+                let module = PyModule::import(py, "yaru_core.api")?;
+                let search_fn = module.getattr("search_anime")?;
+                let response = search_fn.call1((&self.input,))?;
+
+                let media = response
+                    .downcast::<PyDict>()?
+                    .get_item("media")?
+                    .unwrap();
+
+                let media_list = media.downcast::<pyo3::types::PyList>()?;
+
+                self.results = media_list
+                    .iter()
+                    .map(|item| {
+                        let item = item.downcast::<PyDict>().unwrap();
+
+                        let binding = item
+                            .get_item("title").unwrap().unwrap();
+                        let title_obj = binding
+                            .downcast::<PyDict>().unwrap();
+
+                        let english = title_obj.get_item("english").unwrap();
+                        let romaji = title_obj.get_item("romaji").unwrap();
+
+                        let title = match english {
+                            Some(e) if !e.is_none() => e.to_string(),
+                            _ => romaji.map(|r| r.to_string()).unwrap_or_default(),
+                        };
+
+                        let year = item.get_item("seasonYear").unwrap()
+                            .map(|v| v.to_string()).unwrap_or("N/A".to_string());
+                        let score = item.get_item("averageScore").unwrap()
+                            .map(|v| v.to_string()).unwrap_or("N/A".to_string());
+                        let eps = item.get_item("episodes").unwrap()
+                            .map(|v| v.to_string()).unwrap_or("N/A".to_string());
+                        let status = item.get_item("status").unwrap()
+                            .map(|v| v.to_string()).unwrap_or("N/A".to_string());
+
+                        format!("{} ({}) | score: {} | eps: {} | {}", title, year, score, eps, status)
+                    })
+                    .collect();
+
+                self.error = None;
+                Ok(())
+            })();
+
+            if let Err(e) = result {
+                self.error = Some(format!("[error] {}", e));
+            }
+        });
     }
 }
 
@@ -54,11 +114,14 @@ fn main() -> Result<(), io::Error> {
                 .block(Block::default().borders(Borders::ALL).title(" yaru "));
             f.render_widget(input, chunks[0]);
 
-            let items: Vec<ListItem> = app
-                .results
-                .iter()
-                .map(|r| ListItem::new(r.as_str()))
-                .collect();
+            let items: Vec<ListItem> = if let Some(ref err) = app.error {
+                vec![ListItem::new(err.as_str())]
+            } else {
+                app.results
+                    .iter()
+                    .map(|r| ListItem::new(r.as_str()))
+                    .collect()
+            };
 
             let list = List::new(items)
                 .block(Block::default().borders(Borders::ALL).title(" results "));
@@ -72,8 +135,11 @@ fn main() -> Result<(), io::Error> {
         if let Event::Key(key) = event::read()? {
             match key.code {
                 KeyCode::Char('q') => break,
+                KeyCode::Enter => app.search(),
                 KeyCode::Char(c) => app.input.push(c),
-                KeyCode::Backspace => { app.input.pop(); }
+                KeyCode::Backspace => {
+                    app.input.pop();
+                }
                 _ => {}
             }
         }
