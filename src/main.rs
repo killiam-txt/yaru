@@ -6,6 +6,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use pyo3::prelude::*;
 use ratatui::{Terminal, backend::CrosstermBackend};
 use std::io;
 use app::{App, Screen};
@@ -19,6 +20,12 @@ fn main() -> Result<(), io::Error> {
     let mut terminal = Terminal::new(backend)?;
 
     let mut app = App::new();
+
+    Python::with_gil(|py| {
+        let module = PyModule::import(py, "yaru_core.db").unwrap();
+        let init_fn = module.getattr("init_db").unwrap();
+        init_fn.call0().unwrap();
+    });
 
     loop {
         terminal.draw(|f| ui::draw(f, &app))?;
@@ -47,6 +54,7 @@ fn main() -> Result<(), io::Error> {
                 },
                 Screen::Detail => match key.code {
                     KeyCode::Esc => app.screen = Screen::Search,
+                    KeyCode::Char('l') => app.add_to_list(),
                     _ => {}
                 },
             }

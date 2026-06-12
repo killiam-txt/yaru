@@ -148,4 +148,28 @@ impl App {
 
         self.screen = Screen::Detail;
     }
+
+    pub fn add_to_list(&mut self) {
+        if self.result_ids.is_empty() {
+            return;
+        }
+        let id = self.result_ids[self.selected];
+
+        Python::with_gil(|py| {
+            let result: PyResult<()> = (|| {
+                let api_module = PyModule::import(py, "yaru_core.api")?;
+                let detail_fn = api_module.getattr("get_anime_details")?;
+                let anime = detail_fn.call1((id,))?;
+
+                let db_module = PyModule::import(py, "yaru_core.db")?;
+                let add_fn = db_module.getattr("add_anime")?;
+                add_fn.call1((anime,))?;
+                Ok(())
+            })();
+
+            if let Err(e) = result {
+                self.error = Some(format!("[error] {}", e));
+            }
+        });
+    }
 }
