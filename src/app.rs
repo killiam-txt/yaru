@@ -11,11 +11,14 @@ pub struct App {
     pub input: String,
     pub results: Vec<String>,
     pub result_ids: Vec<i64>,
+    pub list_ids: Vec<i64>,
     pub error: Option<String>,
     pub selected: usize,
+    pub list_selected: usize,
     pub detail: Option<String>,
     pub screen: Screen,
     pub list_items: Vec<String>,
+    pub insert_mode: bool,
 }
 
 impl App {
@@ -24,11 +27,14 @@ impl App {
             input: String::new(),
             results: Vec::new(),
             result_ids: Vec::new(),
+            list_ids: Vec::new(),
             error: None,
             selected: 0,
+            list_selected: 0,
             detail: None,
             screen: Screen::Search,
             list_items: Vec::new(),
+            insert_mode: false,
         }
     }
 
@@ -39,6 +45,7 @@ impl App {
         self.selected = 0;
         self.result_ids = Vec::new();
         self.detail = None;
+        self.insert_mode = false;
 
         Python::with_gil(|py| {
             let result: PyResult<()> = (|| {
@@ -177,6 +184,8 @@ impl App {
     }
 
     pub fn fetch_list(&mut self) {
+        self.list_selected = 0;
+
         Python::with_gil(|py| {
             let result: PyResult<()> = (|| {
                 let module = PyModule::import(py, "yaru_core.db")?;
@@ -184,10 +193,17 @@ impl App {
                 let response = get_fn.call0()?;
                 let items = response.downcast::<pyo3::types::PyList>()?;
 
+                let mut ids = Vec::new();
                 self.list_items = items
                     .iter()
                     .map(|item| {
                         let item = item.downcast::<PyDict>().unwrap();
+
+                        let id: i64 = item.get_item("id").unwrap()
+                            .map(|v| v.extract::<i64>().unwrap_or(0))
+                            .unwrap_or(0);
+                        ids.push(id);
+
                         let title = item.get_item("title").unwrap()
                             .map(|v| v.to_string()).unwrap_or("N/A".to_string());
                         let year = item.get_item("year").unwrap()
@@ -205,6 +221,7 @@ impl App {
                         )
                     })
                     .collect();
+                self.list_ids = ids;
 
                 Ok(())
             })();
@@ -215,5 +232,27 @@ impl App {
         });
 
         self.screen = Screen::List;
+    }
+
+    pub fn remove_from_list(&mut self) {
+        if self.list_ids.is_empty() {
+            return;
+        }
+        let id = self.list_ids[self.list_selected];
+
+        Python::with_gil(|py| {
+            let result: PyResult<()> = (|| {
+                let module = PyModule::import(py, "yaru_core.db")?;
+                let remove_fn = module.getattr("remove_anime")?;
+                remove_fn.call1((id,))?;
+                Ok(())
+            })();
+
+            if let Err(e) = result {
+                self.error = Some(format!("[error] {}", e));
+            }
+        });
+
+        self.fetch_list();
     }
 }

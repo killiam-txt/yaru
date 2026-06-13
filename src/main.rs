@@ -32,27 +32,37 @@ fn main() -> Result<(), io::Error> {
 
         if let Event::Key(key) = event::read()? {
             match app.screen {
-                Screen::Search => match key.code {
-                    KeyCode::Esc => break,
-                    KeyCode::Enter => app.search(),
-                    KeyCode::Down => {
-                        if !app.results.is_empty() && app.selected < app.results.len() - 1 {
-                            app.selected += 1;
+                Screen::Search => {
+                    if app.insert_mode {
+                        match key.code {
+                            KeyCode::Esc => app.insert_mode = false,
+                            KeyCode::Enter => app.search(),
+                            KeyCode::Char(c) => app.input.push(c),
+                            KeyCode::Backspace => { app.input.pop(); }
+                            _ => {}
+                        }
+                    } else {
+                        match key.code {
+                            KeyCode::Esc => break,
+                            KeyCode::Char('i') => app.insert_mode = true,
+                            KeyCode::Char('l') => app.add_to_list(),
+                            KeyCode::Char('w') => app.fetch_list(),
+                            KeyCode::Tab => app.fetch_detail(),
+                            KeyCode::Enter => app.search(),
+                            KeyCode::Down => {
+                                if !app.results.is_empty() && app.selected < app.results.len() - 1 {
+                                    app.selected += 1;
+                                }
+                            }
+                            KeyCode::Up => {
+                                if app.selected > 0 {
+                                    app.selected -= 1;
+                                }
+                            }
+                            _ => {}
                         }
                     }
-                    KeyCode::Up => {
-                        if app.selected > 0 {
-                            app.selected -= 1;
-                        }
-                    }
-                    KeyCode::Tab => app.fetch_detail(),
-                    KeyCode::Char('w') => app.fetch_list(),
-                    KeyCode::Char(c) => app.input.push(c),
-                    KeyCode::Backspace => {
-                        app.input.pop();
-                    }
-                    _ => {}
-                },
+                }
                 Screen::Detail => match key.code {
                     KeyCode::Esc => app.screen = Screen::Search,
                     KeyCode::Char('l') => app.add_to_list(),
@@ -60,6 +70,17 @@ fn main() -> Result<(), io::Error> {
                 },
                 Screen::List => match key.code {
                     KeyCode::Esc => app.screen = Screen::Search,
+                    KeyCode::Down => {
+                        if !app.list_items.is_empty() && app.list_selected < app.list_items.len() - 1 {
+                            app.list_selected += 1;
+                        }
+                    }
+                    KeyCode::Up => {
+                        if app.list_selected > 0 {
+                            app.list_selected -= 1;
+                        }
+                    }
+                    KeyCode::Char('d') => app.remove_from_list(),
                     _ => {}
                 },
             }

@@ -39,7 +39,12 @@ pub fn draw(f: &mut Frame, app: &App) {
             state.select(Some(app.selected));
             f.render_stateful_widget(list, chunks[1], &mut state);
 
-            let footer = Paragraph::new("[esc] quit  [enter] search  [up/down] navigate  [tab] details  [w] watchlist")
+            let footer_text = if app.insert_mode {
+                "[esc] normal mode  [enter] search"
+            } else {
+                "[esc] quit  [i] insert  [up/down] navigate  [tab] details  [l] add to list  [w] watchlist"
+            };
+            let footer = Paragraph::new(footer_text)
                 .style(Style::default().fg(Color::DarkGray));
             f.render_widget(footer, chunks[2]);
         }
@@ -73,10 +78,14 @@ pub fn draw(f: &mut Frame, app: &App) {
             };
 
             let list = List::new(items)
-                .block(Block::default().borders(Borders::ALL).title(" watchlist "));
-            f.render_widget(list, chunks[1]);
+                .block(Block::default().borders(Borders::ALL).title(" watchlist "))
+                .highlight_symbol("> ");
 
-            let footer = Paragraph::new("[esc] back")
+            let mut state = ListState::default();
+            state.select(Some(app.list_selected));
+            f.render_stateful_widget(list, chunks[1], &mut state);
+
+            let footer = Paragraph::new("[esc] back  [up/down] navigate  [d] remove")
                 .style(Style::default().fg(Color::DarkGray));
             f.render_widget(footer, chunks[2]);
         }
