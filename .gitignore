@@ -1,6 +1,7 @@
 .venv
 yaru.egg-info/
-
+__pycache__/
+*.pyc
 
 # Added by cargo
 
