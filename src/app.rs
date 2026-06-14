@@ -275,6 +275,7 @@ impl App {
             return;
         }
         let id = self.list_ids[self.list_selected];
+        let current_selected = self.list_selected;
 
         Python::with_gil(|py| {
             let result: PyResult<()> = (|| {
@@ -316,5 +317,6 @@ impl App {
         });
 
         self.fetch_list();
+        self.list_selected = current_selected;
     }
 }
