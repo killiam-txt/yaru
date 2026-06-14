@@ -144,9 +144,23 @@ impl App {
                 let desc = media.get_item("description").unwrap()
                     .map(|v| v.to_string()).unwrap_or("N/A".to_string());
 
+                let genres_clean = genres
+                    .trim_matches(|c| c == '[' || c == ']')
+                    .replace('\'', "")
+                    .split(", ")
+                    .collect::<Vec<&str>>()
+                    .join(" - ");
+
+                let desc_clean = desc
+                    .replace("<br>", "\n")
+                    .replace("<br />", "\n")
+                    .replace("&amp;", "&")
+                    .replace("&lt;", "<")
+                    .replace("&gt;", ">");
+
                 self.detail = Some(format!(
-                    "{} [{}]\n\nscore: {} | eps: {} | {}\ngenres: {}\n\n{}",
-                    title, year, score, eps, status, genres, desc
+                    "{} [{}]\n\ngenres: {}\n\n{}\n\nscore:  {}\neps:    {}\nstatus: {}",
+                    title, year, genres_clean, desc_clean.trim(), score, eps, status
                 ));
                 Ok(())
             })();
