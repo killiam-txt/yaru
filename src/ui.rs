@@ -6,6 +6,14 @@ use ratatui::{
 };
 use crate::app::{App, Screen};
 
+fn truncate(s: &str, max: usize) -> String {
+    if s.len() > max {
+        format!("{}...", &s[..max.saturating_sub(3)])
+    } else {
+        s.to_string()
+    }
+}
+
 pub fn draw(f: &mut Frame, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -22,12 +30,24 @@ pub fn draw(f: &mut Frame, app: &App) {
                 .block(Block::default().borders(Borders::ALL).title(" yaru "));
             f.render_widget(input, chunks[0]);
 
+            let width = chunks[1].width as usize;
+            let title_width = width.saturating_sub(60);
+
             let items: Vec<ListItem> = if let Some(ref err) = app.error {
                 vec![ListItem::new(err.as_str())]
             } else {
                 app.results
                     .iter()
-                    .map(|r| ListItem::new(r.as_str()))
+                    .map(|r| {
+                        let parts: Vec<&str> = r.splitn(2, '[').collect();
+                        let title = truncate(parts[0].trim(), title_width);
+                        let rest = if parts.len() > 1 {
+                            format!("[{}", parts[1])
+                        } else {
+                            String::new()
+                        };
+                        ListItem::new(format!("{:<width$} {}", title, rest, width = title_width))
+                    })
                     .collect()
             };
 
@@ -68,12 +88,24 @@ pub fn draw(f: &mut Frame, app: &App) {
                 .block(Block::default().borders(Borders::ALL).title(" yaru "));
             f.render_widget(placeholder, chunks[0]);
 
+            let width = chunks[1].width as usize;
+            let title_width = width.saturating_sub(60);
+
             let items: Vec<ListItem> = if app.list_items.is_empty() {
                 vec![ListItem::new("-- watchlist is empty --")]
             } else {
                 app.list_items
                     .iter()
-                    .map(|r| ListItem::new(r.as_str()))
+                    .map(|r| {
+                        let parts: Vec<&str> = r.splitn(2, '[').collect();
+                        let title = truncate(parts[0].trim(), title_width);
+                        let rest = if parts.len() > 1 {
+                            format!("[{}", parts[1])
+                        } else {
+                            String::new()
+                        };
+                        ListItem::new(format!("{:<width$} {}", title, rest, width = title_width))
+                    })
                     .collect()
             };
 
@@ -85,7 +117,7 @@ pub fn draw(f: &mut Frame, app: &App) {
             state.select(Some(app.list_selected));
             f.render_stateful_widget(list, chunks[1], &mut state);
 
-            let footer = Paragraph::new("[esc] back  [up/down] navigate  [s] cycle status  [d] remove")
+            let footer = Paragraph::new("[esc] back  [up/down] navigate  [s] status  [d] remove")
                 .style(Style::default().fg(Color::DarkGray));
             f.render_widget(footer, chunks[2]);
         }
