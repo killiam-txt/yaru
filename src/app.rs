@@ -255,4 +255,52 @@ impl App {
 
         self.fetch_list();
     }
+
+    pub fn cycle_status(&mut self) {
+        if self.list_ids.is_empty() {
+            return;
+        }
+        let id = self.list_ids[self.list_selected];
+
+        Python::with_gil(|py| {
+            let result: PyResult<()> = (|| {
+                let module = PyModule::import(py, "yaru_core.db")?;
+                let conn_fn = module.getattr("_connect")?;
+                let conn = conn_fn.call0()?;
+
+                let cursor = conn.call_method0("cursor")?;
+
+                let current: String = cursor
+                    .call_method1(
+                        "execute",
+                        ("SELECT watch_status FROM anime_list WHERE id = ?", (id,)),
+                    )?
+                    .call_method0("fetchone")?
+                    .get_item(0)?
+                    .extract()?;
+
+                let next_status = match current.as_str() {
+                    "plan_to_watch" => "watching",
+                    "watching" => "completed",
+                    _ => "plan_to_watch",
+                };
+
+                cursor.call_method1(
+                    "execute",
+                    (
+                        "UPDATE anime_list SET watch_status = ? WHERE id = ?",
+                        (next_status, id),
+                    ),
+                )?;
+                conn.call_method0("commit")?;
+                Ok(())
+            })();
+
+            if let Err(e) = result {
+                self.error = Some(format!("[error] {}", e));
+            }
+        });
+
+        self.fetch_list();
+    }
 }

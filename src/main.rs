@@ -80,6 +80,7 @@ fn main() -> Result<(), io::Error> {
                             app.list_selected -= 1;
                         }
                     }
+                    KeyCode::Char('s') => app.cycle_status(),
                     KeyCode::Char('d') => app.remove_from_list(),
                     _ => {}
                 },
