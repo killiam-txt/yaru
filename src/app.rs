@@ -109,12 +109,7 @@ impl App {
         });
     }
 
-    pub fn fetch_detail(&mut self) {
-        if self.result_ids.is_empty() {
-            return;
-        }
-        let id = self.result_ids[self.selected];
-
+    fn fetch_detail_by_id(&mut self, id: i64) {
         Python::with_gil(|py| {
             let result: PyResult<()> = (|| {
                 let module = PyModule::import(py, "yaru_core.api")?;
@@ -171,6 +166,22 @@ impl App {
         });
 
         self.screen = Screen::Detail;
+    }
+
+    pub fn fetch_detail(&mut self) {
+        if self.result_ids.is_empty() {
+            return;
+        }
+        let id = self.result_ids[self.selected];
+        self.fetch_detail_by_id(id);
+    }
+
+    pub fn fetch_detail_from_list(&mut self) {
+        if self.list_ids.is_empty() {
+            return;
+        }
+        let id = self.list_ids[self.list_selected];
+        self.fetch_detail_by_id(id);
     }
 
     pub fn add_to_list(&mut self) {
