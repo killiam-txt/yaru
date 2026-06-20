@@ -28,15 +28,15 @@ make run
 
 | key | action |
 |-----|--------|
-| i | insert mode |
-| esc | normal mode / quit |
-| enter | search |
-| up/down | navigate |
-| tab | details |
-| l | add to watchlist |
-| w | open watchlist |
-| s | watch status |
-| d | remove from watchlist |
+| `i` | insert mode |
+| `esc` | normal mode / quit |
+| `enter` | search |
+| `up/down` | navigate |
+| `tab` | details |
+| `l` | add to watchlist |
+| `w` | open watchlist |
+| `s` | watch status |
+| `d` | remove from watchlist |
 
 ## stack
 
