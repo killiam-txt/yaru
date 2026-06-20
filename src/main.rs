@@ -64,7 +64,7 @@ fn main() -> Result<(), io::Error> {
                     }
                 }
                 Screen::Detail => match key.code {
-                    KeyCode::Esc => app.screen = Screen::Search,
+                    KeyCode::Esc => app.screen = app.previous_screen.clone(),
                     KeyCode::Char('l') => app.add_to_list(),
                     _ => {}
                 },

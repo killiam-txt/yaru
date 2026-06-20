@@ -1,6 +1,7 @@
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
+#[derive(Clone)]
 pub enum Screen {
     Search,
     Detail,
@@ -17,6 +18,7 @@ pub struct App {
     pub list_selected: usize,
     pub detail: Option<String>,
     pub screen: Screen,
+    pub previous_screen: Screen,
     pub list_items: Vec<String>,
     pub insert_mode: bool,
 }
@@ -33,6 +35,7 @@ impl App {
             list_selected: 0,
             detail: None,
             screen: Screen::Search,
+            previous_screen: Screen::Search,
             list_items: Vec::new(),
             insert_mode: false,
         }
@@ -165,6 +168,7 @@ impl App {
             }
         });
 
+        self.previous_screen = self.screen.clone();
         self.screen = Screen::Detail;
     }
 

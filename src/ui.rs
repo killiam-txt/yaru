@@ -79,7 +79,11 @@ pub fn draw(f: &mut Frame, app: &App) {
                 .wrap(Wrap { trim: true });
             f.render_widget(detail, chunks[1]);
 
-            let footer = Paragraph::new("[esc] back  [l] add to list")
+            let footer_text = match app.previous_screen {
+                Screen::List => "[esc] back",
+                _ => "[esc] back  [l] add to list",
+            };
+            let footer = Paragraph::new(footer_text)
                 .style(Style::default().fg(Color::DarkGray));
             f.render_widget(footer, chunks[2]);
         }
