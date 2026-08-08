@@ -1,6 +1,6 @@
 # yaru
 
-anime search CLI for linux with a TUI interface.
+anime search TUI for linux.
 
 built with Rust + Python (PyO3), uses AniList's GraphQL API.
 > I watch anime through ani-cli and never wanted to leave the terminal just to look up info. So I built this.
