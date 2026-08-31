@@ -1,4 +1,4 @@
-.PHONY: run build test install
+.PHONY: install run build test
 
 VENV := .venv/bin
 
