@@ -5,7 +5,7 @@ anime search TUI for linux.
 built with Rust + Python (PyO3), uses AniList's GraphQL API.
 > I watch anime through ani-cli and never wanted to leave the terminal just to look up info. So I built this.
 
-![](https://i.ibb.co/hFRmffZh/1781929773.png)
+<img width="1920" height="1080" alt="1781929773" src="https://github.com/user-attachments/assets/de09aace-e64e-4a16-aa31-59fc231c1a4a" />
 
 ## requirements
 
